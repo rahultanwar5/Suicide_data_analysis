@@ -53,18 +53,125 @@ FROM
 	GROUP BY YEAR
 	ORDER BY YEAR ASC;
 
---CHECKING TOP 10 STATES WHERE SUICIDES ARE MORE:
-WITH STATE_ANALYSIS AS
-(SELECT 
-	STATE,
-	SUM(CAST(Total AS INT)) AS Suicides,
-	DENSE_RANK() OVER(ORDER BY SUM(CAST(Total AS INT)) DESC) AS RANKS
+--CHECKING TOP 5 STATES WHERE SUICIDES ARE MORE:
+SELECT
+	TOP (5) State,
+	SUM(CAST(Total as int)) as Total_Deaths 
+FROM 
+	Suicides 
+	GROUP BY State 
+	ORDER BY Total_Deaths DESC;
+
+--WHICH YEAR MORE SUICIDES HAPPENED
+Select 
+	Year,
+	SUM(cast (Total as int))As Suicides,
+	DENSE_RANK() over(order by SUM(cast (Total as int)) Desc ) AS Ranks
+From 
+	Suicides 
+	Where Type_code='Causes' group by Year;
+
+--IN 2007, CHECKING THE TENDS ACCORDING TO AGE GROUP
+Select 
+	Age_group,
+	SUM(CAST (Total as int))As Suicides,
+	DENSE_RANK() over(order by SUM(cast (Total as int)) Desc ) AS Ranks
+From 
+	Suicides 
+	Where Type_code='Causes' and  Year='2007'group by Age_group;
+
+--FINDING MAJOR CAUSE OF SUICIDE HAPPENED
+Select 
+	TOP(10) Type, 
+	SUM(cast (Total as int)) As Suicides,
+	DENSE_RANK() over(order by SUM(cast (Total as int)) Desc ) AS Ranks
+From 
+	Suicides 
+	Where Type_code='Causes' group by Type;
+
+--FINDING TOTAL NUMBER OF SUICIDES AS PER MARITAL STATUS: 
+Select 
+	Type,
+	SUM(CAST (Total as int)) As Suicides,
+	DENSE_RANK() over(order by SUM(cast (Total as int)) Desc ) AS Ranks
+From 
+	Suicides 
+	Where Type_code='Social_status' group by Type;
+
+--FINDING TOTAL NUMBER OF SUICIDES AS PER EDUCATION STATUS:
+Select 
+	TOP(10) Type, 
+	SUM(CAST (Total as int))As Suicides,
+	DENSE_RANK() over(order by SUM(cast (Total as int)) Desc ) AS Ranks
+From 
+	Suicides 
+	Where Type_code='Education_Status' group by Type;
+
+--FINDING TOTAL NUMBER OF SUICIDES AS PER AGE GROUP:
+SELECT
+	Age_group,
+	SUM(CAST(Total as int)) as Total_Deaths 
+FROM
+	Suicides 
+	GROUP BY Age_group 
+	ORDER BY Total_Deaths DESC; 
+
+--FINDING WHICH TYPE CODE IS MORE DANGEROUS FOR FEMALE
+SELECT
+	Type_code,
+	SUM(CAST(Total as int)) as Total_Deaths
+FROM
+	Suicides
+	where Gender='Female' 
+	GROUP BY Type_code 
+	ORDER BY Total_Deaths DESC;
+
+--FINDING AGE GROUP GENERALLY HANG THEMSELVES
+SELECT
+	Age_group,
+	SUM(CAST(Total as int)) as Total_Deaths 
+FROM 
+	Suicides 
+	WHERE Type like '%Hanging%' 
+	GROUP BY Age_group
+	ORDER BY Total_Deaths DESC;
+
+--FINDING TOP 3 REASON FOR FEMALE TO COMMIT SUICIDE
+SELECT
+	TOP(3) Type,
+	SUM(CAST(Total as int)) as Total_Deaths
 FROM 
 	Suicides
-	WHERE Type_code= 'Causes'
-	GROUP BY State) 
-SELECT TOP 10 * FROM STATE_ANALYSIS;
+	WHERE gender='Female' 
+	GROUP BY Type 
+	ORDER BY Total_Deaths DESC;
 
+--CREATING FUNCTION TO GET AGE WISE SUICIDE TEND FOR PARTICULAR YEAR
+CREATE FUNCTION Total_Suicides (
+    @Year VARCHAR(4)
+)
+RETURNS TABLE AS
+RETURN
+SELECT 
+	TOP(5) Age_group,
+	SUM(CAST(Total as int)) AS Total_Suicides
+FROM 
+	Suicides
+	WHERE YEAR = @year
+	GROUP BY Age_group
+	ORDER BY Total_Suicides desc;
+
+SELECT * FROM Total_Suicides(2006)
+
+
+
+
+
+
+
+
+
+	
 
 
 
