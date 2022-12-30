@@ -161,26 +161,80 @@ FROM
 	GROUP BY Age_group
 	ORDER BY Total_Suicides desc;
 
-SELECT * FROM Total_Suicides(2006)
+SELECT * FROM Total_Suicides(2006) --FOR 2006 YEAR
+
+-------------------****PIVOT****-------------------
+/*Declare Variable*/  
+DECLARE @Pivot_Column [nvarchar](max);  
+DECLARE @Query [nvarchar](max);  
+  
+/*Select Pivot Column*/  
+SELECT @Pivot_Column= COALESCE(@Pivot_Column+',','')+ QUOTENAME([Year]) FROM  
+(SELECT DISTINCT [Year] FROM [dbo].[Suicides])Tab ORDER BY [YEAR]  
+/*Create Dynamic Query*/  
+SELECT @Query='SELECT Age_group, '+@Pivot_Column+' FROM   
+(SELECT Age_group, [Year], cast(Total as int) as Totals FROM [dbo].[Suicides])Tab1  
+PIVOT  
+(  
+SUM(Totals) FOR [Year] IN ('+@Pivot_Column+')) AS Tab2  
+ORDER BY Tab2.Age_group'  
+  
+/*Execute Query*/  
+EXEC  sp_executesql  @Query
 
 
+-- CREATING FUNCTION TO GET YEAR WISE SUICIDE TEND FOR PARTICULAR STATE
+CREATE FUNCTION StateChoice(
+	@state varchar(30)
+	)
+RETURNS TABLE AS RETURN 
+SELECT YEAR,SUM(CONVERT(int,Total)) AS Suicides
+FROM Suicides
+WHERE State= @state
+GROUP BY YEAR;
 
+SELECT * FROM StateChoice('Goa') ORDER BY YEAR;
 
+-------------------****PIVOT****-------------------
+--Declare Variable
+DECLARE @Pivot_Column [nvarchar](max);  
+DECLARE @Query [nvarchar](max);  
+  
+--Select Pivot Column
+SELECT @Pivot_Column=ISNULL(@Pivot_Column+',','')+ QUOTENAME(Age_group) FROM  
+(SELECT DISTINCT [Age_group] FROM dbo.Suicides) AS Tab Order by Age_Group
+  
+--Create Dynamic Pivot Query for Age group distribution 
+SELECT @Query='SELECT Year, '+@Pivot_Column+'FROM 
+(SELECT Year, [Age_group], convert(int,Total) AS Suicides FROM dbo.Suicides where state=''goa'') as Tab1  
+PIVOT  
+(  
+SUM(Suicides) FOR [Age_group] IN ('+@Pivot_Column+')) AS Tab2  
+ORDER BY Tab2.Year'
+  
+--Execute Query 
+EXEC  sp_executesql  @Query
 
+-- Gender Aggregation year wise (particular state)
+---------------**PIVOT**----------------------
 
-
-
-
-	
-
-
-
-
-
-
-
-
-
-
+--Declare Variable
+DECLARE @Col_Gen [nvarchar](max);  
+DECLARE @Query_Gen [nvarchar](max);  
+  
+--Select Pivot Column
+SELECT @Col_Gen=ISNULL(@Col_Gen+',','')+ QUOTENAME(Gender) FROM  
+(SELECT DISTINCT [Gender] FROM dbo.Suicides) AS Tab
+  
+--Create Dynamic Pivot Query for Gender distribution 
+SELECT @Query_Gen='SELECT Year, '+@Col_Gen+'FROM 
+(SELECT Year, [Gender], convert(int,Total) AS Suicides FROM dbo.Suicides where state=''goa'') as Tab1  
+PIVOT  
+(  
+SUM(Suicides) FOR [Gender] IN ('+@Col_Gen+')) AS Tab2  
+ORDER BY Tab2.Year'
+  
+--Execute Query 
+EXEC  sp_executesql  @Query_Gen
 
 
